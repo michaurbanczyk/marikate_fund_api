@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 import requests
 import os
 
@@ -13,7 +14,13 @@ data = {
     "client_secret": CLIENT_SECRET,
 }
 app = FastAPI()
-
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:63343"],  # Or ["*"] to allow all origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allow all methods (GET, POST, etc.)
+    allow_headers=["*"],  # Allow all headers
+)
 
 @app.post('/create-order')
 def create_order(request: Request):
