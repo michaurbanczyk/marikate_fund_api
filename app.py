@@ -1,16 +1,43 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+import requests
+import os
 
+URL_TOKEN = os.getenv('URL_TOKEN', "")
+URL_ORDER = os.getenv('URL_ORDER', "")
+CLIENT_ID = os.getenv("CLIENT_ID", "")
+CLIENT_SECRET = os.getenv("CLIENT_SECRET", "")
+
+data = {
+    "grant_type": "client_credentials",
+    "client_id": CLIENT_ID,
+    "client_secret": CLIENT_SECRET,
+}
 app = FastAPI()
 
-@app.get('/')
-def hello_world():
-    return "Hello,World"
 
-@app.get('/hello')
-def another_endpoint():
-    print("Here is the endpoint!")
+@app.post('/create-order')
+def create_order(request: Request):
+    get_token = requests.post(URL_TOKEN, data=data)
+    access_token = get_token.json()["access_token"]
+    client_id = request.client.host
+
+    create_order_body = {
+        "continueUrl": "https://marikate-fund-modern-dev.vercel.app/success",
+        "customerIp": client_id,
+        "merchantPosId": "485425",
+        "description": "RTV market",
+        "currencyCode": "PLN",
+        "totalAmount": "21000"
+    }
+
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json"
+    }
+
+    response = requests.post(URL_ORDER, headers=headers, json=create_order_body)
     return {
-        "fieldA": "fieldA"
+        "payuUrl": response.url
     }
 
 
