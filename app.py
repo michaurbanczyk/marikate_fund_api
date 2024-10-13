@@ -3,8 +3,9 @@ from fastapi.middleware.cors import CORSMiddleware
 import requests
 import os
 
-URL_TOKEN = os.getenv('URL_TOKEN', "")
-URL_ORDER = os.getenv('URL_ORDER', "")
+URL_TOKEN = os.getenv("URL_TOKEN", "")
+URL_ORDER = os.getenv("URL_ORDER", "")
+URL_ORIGIN = os.getenv("URL_ORIGIN", "")
 CLIENT_ID = os.getenv("CLIENT_ID", "")
 CLIENT_SECRET = os.getenv("CLIENT_SECRET", "")
 
