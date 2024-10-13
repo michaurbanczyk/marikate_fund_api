@@ -18,10 +18,10 @@ data = {
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://marikate-dev.vercel.app", "http://localhost:63342"],  # Or ["*"] to allow all origins
+    allow_origins=[URL_ORIGIN],
     allow_credentials=True,
-    allow_methods=["*"],  # Allow all methods (GET, POST, etc.)
-    allow_headers=["*"],  # Allow all headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
@@ -34,7 +34,7 @@ async def create_order(request: Request):
     client_id = request.client.host
 
     create_order_body = {
-        "continueUrl": "https://marikate-dev.vercel.app/success.html",
+        "continueUrl": f"{URL_ORIGIN}/success.html",
         "customerIp": client_id,
         "merchantPosId": "485425",
         "description": "Donation",
