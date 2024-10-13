@@ -29,7 +29,6 @@ app.add_middleware(
 async def create_order(request: Request):
     get_token = requests.post(URL_TOKEN, data=data)
     access_token = get_token.json()["access_token"]
-    print("additional print")
     request_body = await request.json()
     amount = request_body.get("amount")
     client_id = request.client.host
