@@ -18,11 +18,17 @@ data = {
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[URL_ORIGIN],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.get('/check-path')
+async def hello_world():
+    return {
+        "hello": "world!"
+    }
 
 
 @app.post('/create-order')
