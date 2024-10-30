@@ -1,6 +1,5 @@
 import requests
 import os
-import logging
 
 from fastapi import HTTPException, status, Request, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -23,7 +22,7 @@ data = {
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://marikate-polska.org/"],  # Or ["*"] to allow all origins
+    allow_origins=[URL_ORIGIN],  # Or ["*"] to allow all origins
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -38,20 +37,20 @@ async def hello_world():
 
 
 def get_access_token() -> str | None:
-    logging.info("get_access_token - start")
+    print("get_access_token - start")
     token = requests.post(URL_TOKEN, data=data)
     access_token = None
     try:
         access_token = token.json()["access_token"]
     except:
-        logging.info("get_access_token - issue with getting the token")
+        print("get_access_token - issue with getting the token")
 
-    logging.info("get_access_token - end")
+    print("get_access_token - end")
     return access_token
 
 
 def get_order_body(order: OrderBody, request: Request) -> dict:
-    logging.info("get_order_body - start")
+    print("get_order_body - start")
     amount = order.amount
     currency = order.currency
     client_id = request.client.host
@@ -66,13 +65,13 @@ def get_order_body(order: OrderBody, request: Request) -> dict:
         "totalAmount": str(int(amount) * 100)
     }
 
-    logging.info(f"get_order_body - end, {order_body}")
+    print(f"get_order_body - end, {order_body}")
     return order_body
 
 
 @app.post('/create-order', response_model=OrderResponse, status_code=status.HTTP_201_CREATED)
 async def create_order(order: OrderBody, request: Request):
-    logging.info("/create-order - start")
+    print("/create-order - start")
     access_token = get_access_token()
     if not access_token:
         raise HTTPException(status_code=404, detail="Cannot access token")
@@ -84,7 +83,7 @@ async def create_order(order: OrderBody, request: Request):
     if not response.ok:
         raise HTTPException(status_code=response.status_code, detail=response.text)
 
-    logging.info("/create-order - end")
+    print("/create-order - end")
     return OrderResponse(payu_url=response.url)
 
 
