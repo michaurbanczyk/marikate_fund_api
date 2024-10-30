@@ -80,6 +80,7 @@ async def create_order(order: OrderBody, request: Request):
     headers = {"Authorization": f"Bearer {access_token}", "Content-Type": "application/json"}
 
     response = requests.post(URL_ORDER, headers=headers, json=order_body)
+    print(response)
     if not response.ok:
         raise HTTPException(status_code=response.status_code, detail=response.text)
 
