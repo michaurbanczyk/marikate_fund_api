@@ -58,11 +58,11 @@ def get_order_body(order: OrderBody, request: Request) -> dict:
     order_body = {
         "continueUrl": URL_ORIGIN,
         "customerIp": client_id,
-        "merchantPosId": "485425",
+        "merchantPosId": "4340548",
         "description": "Donation Marikate Polska",
         "currencyCode": currency.PLN.value,
         # has to be multiplied based on the PayU documentation
-        "totalAmount": str(int(amount) * 100)
+        "totalAmount": str(int(amount) * 100),
     }
 
     print(f"get_order_body - end, {order_body}")
@@ -80,7 +80,6 @@ async def create_order(order: OrderBody, request: Request):
     headers = {"Authorization": f"Bearer {access_token}", "Content-Type": "application/json"}
 
     response = requests.post(URL_ORDER, headers=headers, json=order_body)
-    print(response)
     if not response.ok:
         raise HTTPException(status_code=response.status_code, detail=response.text)
 
