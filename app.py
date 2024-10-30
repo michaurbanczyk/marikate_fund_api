@@ -1,7 +1,12 @@
-from fastapi import FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
 import requests
 import os
+import logging
+
+from fastapi import HTTPException, status, Request, FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+
+from models.order import OrderBody, OrderResponse
 
 URL_TOKEN = os.getenv("URL_TOKEN", "")
 URL_ORDER = os.getenv("URL_ORDER", "")
@@ -24,39 +29,63 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get('/check-path')
+
+@app.get('/')
 async def hello_world():
     return {
-        "hello": "world!"
+        "response": "API is working!"
     }
 
 
-@app.post('/create-order')
-async def create_order(request: Request):
-    get_token = requests.post(URL_TOKEN, data=data)
-    access_token = get_token.json()["access_token"]
-    request_body = await request.json()
-    amount = request_body.get("amount")
+def get_access_token() -> str | None:
+    logging.info("get_access_token - start")
+    token = requests.post(URL_TOKEN, data=data)
+    access_token = None
+    try:
+        access_token = token.json()["access_token"]
+    except:
+        logging.info("get_access_token - issue with getting the token")
+
+    logging.info("get_access_token - end")
+    return access_token
+
+
+def get_order_body(order: OrderBody, request: Request) -> dict:
+    logging.info("get_order_body - start")
+    amount = order.amount
+    currency = order.currency
     client_id = request.client.host
 
-    create_order_body = {
-        "continueUrl": f"{URL_ORIGIN}/success.html",
+    order_body = {
+        "continueUrl": URL_ORIGIN,
         "customerIp": client_id,
         "merchantPosId": "485425",
-        "description": "Donation",
-        "currencyCode": "PLN",
-        "totalAmount": str(int(amount)*100)
+        "description": "Donation Marikate Polska",
+        "currencyCode": currency.PLN.value,
+        # has to be multiplied based on the PayU documentation
+        "totalAmount": str(int(amount) * 100)
     }
 
-    headers = {
-        "Authorization": f"Bearer {access_token}",
-        "Content-Type": "application/json"
-    }
+    logging.info(f"get_order_body - end, {order_body}")
+    return order_body
 
-    response = requests.post(URL_ORDER, headers=headers, json=create_order_body)
-    return {
-        "payuUrl": response.url
-    }
+
+@app.post('/create-order', response_model=OrderResponse, status_code=status.HTTP_201_CREATED)
+async def create_order(order: OrderBody, request: Request):
+    logging.info("/create-order - start")
+    access_token = get_access_token()
+    if not access_token:
+        raise HTTPException(status_code=404, detail="Cannot access token")
+
+    order_body = get_order_body(order, request)
+    headers = {"Authorization": f"Bearer {access_token}", "Content-Type": "application/json"}
+
+    response = requests.post(URL_ORDER, headers=headers, json=order_body)
+    if not response.ok:
+        raise HTTPException(status_code=response.status_code, detail=response.text)
+
+    logging.info("/create-order - end")
+    return OrderResponse(payu_url=response.url)
 
 
 if __name__ == '__main__':
