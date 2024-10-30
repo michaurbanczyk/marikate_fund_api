@@ -23,7 +23,7 @@ data = {
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[URL_ORIGIN],  # Or ["*"] to allow all origins
+    allow_origins=["https://marikate-polska.org/"],  # Or ["*"] to allow all origins
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
