@@ -53,6 +53,9 @@ def get_order_body(order: OrderBody, request: Request) -> dict:
     print("get_order_body - start")
     amount = order.amount
     currency = order.currency
+    first_name = order.firstName
+    last_name = order.lastName
+    email = order.email
     client_id = request.client.host
 
     order_body = {
@@ -63,6 +66,11 @@ def get_order_body(order: OrderBody, request: Request) -> dict:
         "currencyCode": currency.PLN.value,
         # has to be multiplied based on the PayU documentation
         "totalAmount": str(int(amount) * 100),
+        "buyer": {
+            "email": email,
+            "firstName": first_name,
+            "lastName": last_name,
+        }
     }
 
     print(f"get_order_body - end, {order_body}")

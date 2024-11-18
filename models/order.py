@@ -12,6 +12,9 @@ class Currency(Enum):
 class OrderBody(BaseModel):
     amount: str
     currency: Currency
+    firstName: str
+    lastName: str
+    email: str
 
 
 class OrderResponse(BaseModel):
