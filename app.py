@@ -10,19 +10,17 @@ from models.order import OrderBody, OrderResponse
 URL_TOKEN = os.getenv("URL_TOKEN", "")
 URL_ORDER = os.getenv("URL_ORDER", "")
 URL_ORIGIN = os.getenv("URL_ORIGIN", "")
-CLIENT_ID = os.getenv("CLIENT_ID", "")
-CLIENT_SECRET = os.getenv("CLIENT_SECRET", "")
 
-
-data = {
-    "grant_type": "client_credentials",
-    "client_id": CLIENT_ID,
-    "client_secret": CLIENT_SECRET,
+CREDENTIALS = {
+    "PLN": {"client_id": os.getenv("CLIENT_ID_PLN", ""), "client_secret": os.getenv("CLIENT_SECRET_PLN", "")},
+    "EUR": {"client_id": os.getenv("CLIENT_ID_EUR", ""), "client_secret": os.getenv("CLIENT_SECRET_EUR", "")},
+    "USD": {"client_id": os.getenv("CLIENT_ID_USD", ""), "client_secret": os.getenv("CLIENT_SECRET_USD", "")},
 }
+
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[URL_ORIGIN],  # Or ["*"] to allow all origins
+    allow_origins=["*"],  # Or ["*"] to allow all origins
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -36,8 +34,16 @@ async def hello_world():
     }
 
 
-def get_access_token() -> str | None:
+def get_access_token(currency: str) -> str | None:
     print("get_access_token - start")
+
+    creds = CREDENTIALS[currency]
+    data = {
+        "grant_type": "client_credentials",
+        "client_id": creds["client_id"],
+        "client_secret": creds["client_secret"],
+    }
+
     token = requests.post(URL_TOKEN, data=data)
     access_token = None
     try:
@@ -58,12 +64,13 @@ def get_order_body(order: OrderBody, request: Request) -> dict:
     email = order.email
     client_id = request.client.host
 
+    creds = CREDENTIALS[currency.value]
     order_body = {
         "continueUrl": URL_ORIGIN,
         "customerIp": client_id,
-        "merchantPosId": "4340548",
+        "merchantPosId": creds["client_id"],
         "description": "Donation Marikate Polska",
-        "currencyCode": currency.PLN.value,
+        "currencyCode": currency.value,
         # has to be multiplied based on the PayU documentation
         "totalAmount": str(int(amount) * 100),
         "buyer": {
@@ -80,9 +87,9 @@ def get_order_body(order: OrderBody, request: Request) -> dict:
 @app.post('/create-order', response_model=OrderResponse, status_code=status.HTTP_201_CREATED)
 async def create_order(order: OrderBody, request: Request):
     print("/create-order - start")
-    access_token = get_access_token()
+    access_token = get_access_token(order.currency.value)
     if not access_token:
-        raise HTTPException(status_code=404, detail="Cannot access token")
+        raise HTTPException(status_code=404, detail="Cannot get access token")
 
     order_body = get_order_body(order, request)
     headers = {"Authorization": f"Bearer {access_token}", "Content-Type": "application/json"}
